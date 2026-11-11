@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Defino el modelo de un usuario
+
+enum Role {
+  DESIGNER
+  REGULATORY
+  PRINTER
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+  role     Role
+  notifications Notification[]
+  history ProjectHistory[]
+}
+
+// Defino el modelo de un proyecto
+
+enum ProjectType {
+  PACKAGING
+  OFFLINE_MATERIAL
+  DIGITAL_MATERIAL
+}
+
+enum ProjectPhase {
+  DESIGN
+  REVIEW
+  APPROVED
+  PRINTED
+}
+
+model Project {
+  id        Int          @id @default(autoincrement())
+  name      String
+  type      ProjectType
+  phase     ProjectPhase @default(DESIGN)
+  fileUrl   String?
+  reviewNote String? 
+  createdAt DateTime     @default(now())
+  notifications Notification[]
+  history ProjectHistory[]
+}
+
+model ProjectHistory {
+  id        Int          @id @default(autoincrement())
+  fromPhase ProjectPhase
+  toPhase   ProjectPhase
+  comment   String?
+  createdAt DateTime     @default(now())
+  projectId Int
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User         @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  message   String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  projectId Int
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}

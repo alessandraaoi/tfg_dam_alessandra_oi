@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Project" ALTER COLUMN "reviewNote" DROP NOT NULL,
+ALTER COLUMN "reviewNote" DROP DEFAULT;
