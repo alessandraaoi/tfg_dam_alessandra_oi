@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -8,6 +9,9 @@ const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
 const PORT = 3000;
+
+// Permo que el frontend llame a esta API desde la dirección localhost:5173
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 
 // Defino una ruta de inicio para probar que la conexión al servidor funcione correctamente
 app.get('/start', (req, res) => {
