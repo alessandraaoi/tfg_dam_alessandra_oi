@@ -318,6 +318,45 @@ app.patch('/projects/:id/return', authenticate, authorize('REGULATORY'), async (
   }
 });
 
+// PATCH: guardar la URL del archivo de diseño de un proyecto
+// Solo Diseño, y solo mientras el proyecto está en fase diseño
+app.patch('/projects/:id/file', authenticate, authorize('DESIGNER'), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid project id' });
+    }
+
+    // La URL debe ser un enlace de la cuenta Cloudinary
+    const { fileUrl } = req.body;
+    const allowedPrefix = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/`;
+    if (!fileUrl || typeof fileUrl !== 'string' || !fileUrl.startsWith(allowedPrefix)) {
+      return res.status(400).json({ error: 'A valid Cloudinary file URL is required' });
+    }
+
+    const project = await prisma.project.findUnique({ where: { id: id } });
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    if (project.phase !== 'DESIGN') {
+      return res.status(409).json({ error: 'Files can only be uploaded while the project is in design phase' });
+    }
+
+    // Se guarda la URL nueva: sustituye a la anterior
+    const updatedProject = await prisma.project.update({
+      where: { id: id },
+      data: { fileUrl: fileUrl },
+    });
+
+    res.json(updatedProject);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error saving the file URL' });
+  }
+});
+
+
 // GET: mostrar notificaciones no leídas del usuario que ha iniciado sesión
 app.get('/notifications', authenticate, async (req, res) => {
   try {
